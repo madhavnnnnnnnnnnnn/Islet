@@ -1,0 +1,233 @@
+<Window x:Class="Islet.IslandWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:Islet.Ui"
+        Title="Islet" Width="600" Height="270"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize" Focusable="False"
+        UseLayoutRounding="True" Foreground="White"
+        FontFamily="Segoe UI Variable Display, Segoe UI"
+        TextOptions.TextFormattingMode="Ideal" TextOptions.TextRenderingMode="Grayscale">
+
+    <Window.Resources>
+        <FontFamily x:Key="Icons">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+        <SolidColorBrush x:Key="Sub" Color="#A8A8B0"/>
+
+        <!-- Dark liquid glass: translucent smoky tint over a live blur of whatever is behind -->
+        <LinearGradientBrush x:Key="GlassFill" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#8C2C2C34" Offset="0"/>
+            <GradientStop Color="#A0141419" Offset="0.55"/>
+            <GradientStop Color="#B00C0C10" Offset="1"/>
+        </LinearGradientBrush>
+        <!-- Specular rim: bright top-left, fading round the sides, faint glint bottom-right -->
+        <LinearGradientBrush x:Key="GlassRim" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#70FFFFFF" Offset="0"/>
+            <GradientStop Color="#1AFFFFFF" Offset="0.35"/>
+            <GradientStop Color="#0DFFFFFF" Offset="0.7"/>
+            <GradientStop Color="#40FFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="SolidFill" Color="Black"/>
+
+        <!-- Round transparent icon button (media controls) -->
+        <Style x:Key="IconBtn" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="Transparent" CornerRadius="20" RenderTransformOrigin="0.5,0.5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#1AFFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="b" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="0.88" ScaleY="0.88"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Filled circle button (timer controls) -->
+        <Style x:Key="CircleBtn" TargetType="Button" BasedOn="{StaticResource IconBtn}">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="{TemplateBinding Background}" CornerRadius="20" RenderTransformOrigin="0.5,0.5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Opacity" Value="0.82"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="b" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="0.9" ScaleY="0.9"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Pill chip (quick timer presets) -->
+        <Style x:Key="ChipBtn" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b" Background="#242426" CornerRadius="15" Padding="14,7">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#38383A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel x:Name="Row" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0">
+
+        <!-- ═══════════ The island ═══════════ -->
+        <Border x:Name="Pill" Background="{StaticResource GlassFill}" BorderBrush="{StaticResource GlassRim}" BorderThickness="1"
+                Width="126" Height="32" CornerRadius="16" VerticalAlignment="Top" Cursor="Hand"
+                MouseEnter="Pill_MouseEnter" MouseLeave="Pill_MouseLeave"
+                MouseLeftButtonUp="Pill_MouseLeftButtonUp" MouseRightButtonUp="Pill_MouseRightButtonUp"
+                MouseWheel="Pill_MouseWheel" MouseDown="Pill_MouseDown"
+                AllowDrop="True" DragEnter="Pill_DragEnter" Drop="Pill_Drop">
+
+            <!-- Fixed-size stage centred in the pill; the pill's rounded clip reveals it as it grows -->
+            <Grid x:Name="Stage" Width="440" Height="240" HorizontalAlignment="Center" VerticalAlignment="Top">
+
+                <!-- Liquid sheen: soft light pooling along the top of the glass -->
+                <Rectangle x:Name="Sheen" Height="30" VerticalAlignment="Top" IsHitTestVisible="False">
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#24FFFFFF" Offset="0"/>
+                            <GradientStop Color="#0AFFFFFF" Offset="0.45"/>
+                            <GradientStop Color="#00FFFFFF" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <!-- Compact: music -->
+                <Grid x:Name="PCompactMusic" Height="34" Width="236" HorizontalAlignment="Center" VerticalAlignment="Top"
+                      Visibility="Collapsed" Opacity="0">
+                    <Border x:Name="CmArt" Width="22" Height="22" CornerRadius="6" Background="#2C2C2E"
+                            HorizontalAlignment="Left" Margin="7,0,0,0"/>
+                    <StackPanel x:Name="CmBars" Orientation="Horizontal" Height="14"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                </Grid>
+
+                <!-- Toast (charging, bluetooth, timer done…) -->
+                <Grid x:Name="PToast" Height="38" HorizontalAlignment="Center" VerticalAlignment="Top"
+                      Visibility="Collapsed" Opacity="0">
+                    <StackPanel x:Name="TLeft" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="14,0,0,0">
+                        <TextBlock x:Name="TIcon" FontFamily="{StaticResource Icons}" FontSize="15" VerticalAlignment="Center" Margin="0,0,9,0"/>
+                        <TextBlock x:Name="TTitle" FontSize="13.5" FontWeight="SemiBold" VerticalAlignment="Center"
+                                   MaxWidth="210" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+                    <StackPanel x:Name="TRight" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <TextBlock x:Name="TValue" FontSize="13.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <ui:BatteryGlyph x:Name="TBattery" Margin="7,0,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Expanded: music -->
+                <Grid x:Name="PMusic" Width="400" HorizontalAlignment="Center" VerticalAlignment="Top"
+                      Visibility="Collapsed" Opacity="0">
+                    <StackPanel Margin="18,16,18,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="EmArt" Width="56" Height="56" CornerRadius="13" Background="#2C2C2E"/>
+                            <StackPanel Grid.Column="1" Margin="13,0,10,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="EmTitle" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="EmArtist" FontSize="13" Foreground="{StaticResource Sub}" Margin="0,2,0,0"
+                                           TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <StackPanel x:Name="EmBars" Grid.Column="2" Orientation="Horizontal" Height="20" VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <TextBlock x:Name="EmLyric" Margin="0,13,0,0" FontSize="14.5" FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" Visibility="Collapsed">
+                            <TextBlock.RenderTransform><TranslateTransform/></TextBlock.RenderTransform>
+                        </TextBlock>
+
+                        <Grid x:Name="EmProgressRow" Margin="0,13,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="38"/>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="38"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="EmElapsed" FontSize="11" Foreground="{StaticResource Sub}" Typography.NumeralAlignment="Tabular"/>
+                            <Grid x:Name="EmTrack" Grid.Column="1" Height="4" VerticalAlignment="Center" Margin="4,0">
+                                <Border Background="#2EFFFFFF" CornerRadius="2"/>
+                                <Border x:Name="EmFill" HorizontalAlignment="Left" Width="0" CornerRadius="2" Background="White"/>
+                            </Grid>
+                            <TextBlock x:Name="EmRemain" Grid.Column="2" FontSize="11" Foreground="{StaticResource Sub}"
+                                       TextAlignment="Right" Typography.NumeralAlignment="Tabular"/>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                            <Button x:Name="BPrev" Style="{StaticResource IconBtn}" Content="&#xE892;" Click="OnPrev"/>
+                            <Button x:Name="BPlay" Style="{StaticResource IconBtn}" Content="&#xE769;" FontSize="24" Width="54" Height="44" Margin="14,0" Click="OnPlay"/>
+                            <Button x:Name="BNext" Style="{StaticResource IconBtn}" Content="&#xE893;" Click="OnNext"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Expanded: home (click the idle pill) -->
+                <Grid x:Name="PHome" Width="360" HorizontalAlignment="Center" VerticalAlignment="Top"
+                      Visibility="Collapsed" Opacity="0">
+                    <StackPanel Margin="20,15,20,16">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock x:Name="HTime" FontSize="30" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular"/>
+                                <TextBlock x:Name="HDate" FontSize="13" Foreground="{StaticResource Sub}" Margin="0,-2,0,0"/>
+                            </StackPanel>
+                            <StackPanel x:Name="HBatteryRow" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,0,0">
+                                <TextBlock x:Name="HBattery" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <ui:BatteryGlyph x:Name="HBatteryGlyph" Margin="6,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                        <!-- App shortcuts (filled in code). Drop apps on the island to add, right-click to remove. -->
+                        <StackPanel x:Name="AppsRow" Orientation="Horizontal" Margin="0,14,0,0"/>
+                        <TextBlock x:Name="AppsHint" Margin="0,14,0,2" FontSize="12.5" Foreground="{StaticResource Sub}"
+                                   Text="Drag apps here to pin up to 5 shortcuts" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Privacy dots (mic = orange, camera = green) -->
+                <StackPanel x:Name="Dots" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top"
+                            IsHitTestVisible="False"/>
+            </Grid>
+        </Border>
+
+    </StackPanel>
+</Window>

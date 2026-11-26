@@ -1,0 +1,46 @@
+name: Build & Release
+
+# Push a tag like v1.1.0 to build Islet and attach the .exe files to a GitHub Release.
+# You can also run it manually from the Actions tab (the .exe files appear as run artifacts).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build (needs .NET 8 Desktop Runtime, small)
+        run: dotnet publish Islet/Islet.csproj -c Release -o out/fd
+
+      - name: Build portable (no install needed, larger)
+        run: dotnet publish Islet/Islet.csproj -c Release --self-contained true -p:EnableCompressionInSingleFile=true -o out/sc
+
+      - name: Name the files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item out/fd/Islet.exe release/Islet.exe
+          Copy-Item out/sc/Islet.exe release/Islet-portable.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Islet
+          path: release/*.exe
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe
+          generate_release_notes: true
